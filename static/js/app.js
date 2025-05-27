@@ -1,15 +1,26 @@
 // Данные товаров
 const products = [
-  { id: 1, name: 'Товар 1', img: 'https://via.placeholder.com/150?text=1' },
-  { id: 2, name: 'Товар 2', img: 'https://via.placeholder.com/150?text=2' },
-  { id: 3, name: 'Товар 3', img: 'https://via.placeholder.com/150?text=3' },
-  { id: 4, name: 'Товар 4', img: 'https://via.placeholder.com/150?text=4' },
-  { id: 5, name: 'Товар 5', img: 'https://via.placeholder.com/150?text=5' },
-  { id: 6, name: 'Товар 6', img: 'https://via.placeholder.com/150?text=6' }
+  { id: 1, name: 'Пончики', img: 'static/resources/product1.png' },
+  { id: 2, name: 'Wi-Fi USB адаптер', img: 'static/resources/product2.png' },
+  { id: 3, name: 'Arduino Uno Rev3', img: 'static/resources/product3.png' },
+  { id: 4, name: 'Клаб-сэндвич с карбонадом', img: 'static/resources/product4.png' },
+  { id: 5, name: 'iPhone 16e', img: 'static/resources/product5.png' },
+  { id: 6, name: 'Velodyne VLP 16', img: 'static/resources/product6.png' }
 ];
 let selectedProduct = null;
 let selectedPoint = null;
 let map, marker;
+
+const userIcon = L.icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149071.png', // любая подходящая иконка
+  iconSize: [24, 24], // размер
+  iconAnchor: [16, 32], // точка "основания" иконки
+});
+
+const mapElement = document.getElementById('map');
+// После инициализации карты
+mapElement.classList.add('visible');
+
 
 // Инициализация интерфейса
 initProducts();
@@ -35,16 +46,102 @@ function chooseProduct(p) {
 
 function initMap() {
   if (!map) {
-    map = L.map('map').setView([51.505, -0.09], 13);
+    map = L.map('map').setView([56.834717, 60.791897], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
-    const points = [[51.5, -0.09], [51.51, -0.1], [51.49, -0.08]];
-    points.forEach(pt => {
-      L.marker(pt).addTo(map).on('click', () => selectPoint(pt));
+
+  // В данных точек добавим поле address
+const points = [
+  {
+    coords: [56.834717, 60.791897],
+    popup: "Технопарк<br>улица Конструкторов, 5, Екатеринбург, Свердловская область, 620010",
+    address: "ул. Конструкторов, 5"
+  },
+  {
+    coords: [56.842950, 60.698256],
+    popup: "Дом, строительный гипермаркет<br>улица Владимира Высоцкого, 50, Екатеринбург, Свердловская область, 620072",
+    address: "ул. Владимира Высоцкого, 50"
+  },
+  {
+    coords: [56.798093, 60.764444],
+    popup: "Латвийская улица, 54, Екатеринбург, Свердловская область, 620007",
+    address: "Латвийская ул., 54"
+  }
+];
+
+// Обновим функцию создания маркеров
+points.forEach(p => {
+  const marker = L.marker(p.coords).addTo(map);
+  const popupContent = `
+    ${p.popup}<br>
+    <button onclick="selectPointAndOrder([${p.coords}], '${p.address}')">Сделать заказ</button>
+  `;
+  marker.bindPopup(popupContent);
+});
+
+
+
+    map.on('popupopen', function(e) {
+  const button = e.popup._contentNode.querySelector('.order-btn');
+  if (button) {
+    button.addEventListener('click', () => {
+      const coords = button.getAttribute('data-coords').split(',').map(Number);
+      selectPoint(coords);
+      startOrder();  // сразу делает заказ
     });
   }
+});
+
+
+    // === Геолокация пользователя ===
+    navigator.geolocation.getCurrentPosition(
+  pos => {
+    const { latitude, longitude } = pos.coords;
+    const userMarker = L.marker([latitude, longitude], { icon: userIcon }).addTo(map);
+    userMarker.bindPopup("Вы здесь").openPopup();
+  },
+  err => {
+    console.error("Ошибка при получении геолокации:", err.message);
+  }
+);
+
+  }
 }
+
+async function selectPointAndOrder(pt, address) {
+  selectedPoint = {
+    coords: pt,
+    address: address
+  };
+
+  // Обновляем информацию сразу при выборе
+  document.getElementById('delivery-product').textContent = selectedProduct.name;
+  document.getElementById('delivery-point').textContent = address;
+
+  if (!selectedProduct) {
+    alert("Сначала выберите товар!");
+    return;
+  }
+
+  document.getElementById('map').classList.add('hidden');
+
+  document.getElementById('status-text').textContent = 'Заказ обрабатывается...';
+  document.getElementById('status-section').classList.remove('hidden');
+
+  const res = await fetch('/api/order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      productId: selectedProduct.id,
+      address: address
+    })
+  });
+
+  const { order_id } = await res.json();
+  startTimer(order_id);
+}
+
 
 function selectPoint(pt) {
   selectedPoint = pt;
@@ -105,27 +202,53 @@ async function startOrder() {
 
 function startTimer(orderId) {
   const slider = document.getElementById('slider');
-  const qrDiv  = document.getElementById('qrcode');
-  const total  = 10;
-  let elapsed  = 0;
+  const qrDiv = document.getElementById('qrcode');
+  const total = 5;
+  let elapsed = 0;
 
-  slider.max      = total;
-  slider.value    = 0;
-  slider.disabled = false;  
+  // Обновляем информацию о доставке
+  document.getElementById('delivery-product').textContent = selectedProduct.name;
+  document.getElementById('delivery-point').textContent = selectedPoint.address;
+
+  slider.max = total;
+  slider.value = 0;
+  slider.disabled = false;
   qrDiv.innerHTML = '';
   qrDiv.classList.add('hidden');
 
   const interval = setInterval(() => {
     elapsed++;
     slider.value = elapsed;
-    if (elapsed >= total) {
-      clearInterval(interval);
-      document.getElementById('status-text').textContent = 'Заказ готов';
-      qrDiv.classList.remove('hidden');
-      new QRCode(qrDiv, { text: orderId, width:128, height:128 });
+
+    if (elapsed === Math.floor(total / 2)) {
+      // Через половину времени меняем статус на "Заказ уже летит в постамат..."
+      document.getElementById('status-text').textContent = 'Заказ уже летит в постамат...';
     }
+
+    if (elapsed >= total) {
+    clearInterval(interval);
+    document.getElementById('status-text').textContent = 'Заказ прибыл в постамат! Можете его забрать.';
+    
+    // Показываем QR и информацию
+    const qrDiv = document.getElementById('qrcode');
+    const infoDiv = document.querySelector('.delivery-info');
+    
+    qrDiv.classList.remove('hidden');
+    infoDiv.classList.remove('hidden');
+    
+    new QRCode(qrDiv, { 
+      text: orderId, 
+      width: 128,
+      height: 128 
+    });
+
+    // Заполняем данные
+    document.getElementById('delivery-product').textContent = selectedProduct.name;
+    document.getElementById('delivery-point').textContent = selectedPoint.address;
+  }
   }, 1000);
 }
+
 
 
 function setupRouting() {

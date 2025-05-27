@@ -13,6 +13,10 @@ orders = {}
 def home():
     return render_template("index.html")
 
+@app.route('/admin')
+def admin_panel():
+    return render_template('admin.html')
+
 # Создать заказ — вернуть ID: 1, 2, 3 и т.д.
 @app.route("/api/order", methods=["POST"])
 def create_order():
@@ -27,6 +31,19 @@ def create_order():
         "productId": product_id
     }
     return jsonify({"order_id": order_id})
+
+@app.route('/api/products')
+def get_products():
+    # Пример данных (можно заменить на запрос к базе)
+    products = [
+        {"id": 1, "name": "Пончики"},
+        {"id": 2, "name": "Wi-Fi USB адаптер"},
+        {"id": 3, "name": "Arduino Uno Rev3"},
+        {"id": 4, "name": "Клаб-сэндвич с карбонадом"},
+        {"id": 5, "name": "iPhone 16e"},
+        {"id": 6, "name": "Velodyne VLP 16"}
+    ]
+    return jsonify(products)
 
 # Статус заказа
 @app.route("/api/order/<order_id>/status", methods=["GET"])
@@ -53,4 +70,5 @@ def pickup(order_id):
     return jsonify({"error": "not found"}), 404
 
 #if __name__ == "__main__":
-#    app.run(host="0.0.0.0", port=5000, debug=True)
+    #app.run(host="0.0.0.0", port=5000, debug=True)
+    #app.run(host="0.0.0.0", port=5000, debug=True, ssl_context=("cert.pem", "key.pem"))  # Убедитесь, что у вас есть cert.pem и key.pem

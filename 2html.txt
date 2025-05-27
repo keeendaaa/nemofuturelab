@@ -33,7 +33,7 @@
   <div class="delivery-info hidden">
     <p>Товар: <strong id="delivery-product"></strong></p>
     <p>Адрес: <strong id="delivery-point"></strong></p>
-    <p><a href="/admin">Страница администратора</a></p>
+    <p><a href="#admin">Страница администратора</a></p>
   </div>
 </div>
 
