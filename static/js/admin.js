@@ -38,4 +38,29 @@ async function setupAdmin() {
 }
 
 // Инициализация
-setupAdmin();
+window.onload = function() {
+  setupAdmin();
+  // Карта полетов справа
+  if (document.getElementById('flight-map')) {
+    var map = L.map('flight-map').setView([56.834717, 60.791897], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    // Кастомные иконки дронов
+    var drone1Icon = L.icon({
+      iconUrl: '/static/resources/drone1.svg',
+      iconSize: [48, 48],
+      iconAnchor: [24, 24],
+      popupAnchor: [0, -24]
+    });
+    var drone2Icon = L.icon({
+      iconUrl: '/static/resources/drone2.svg',
+      iconSize: [48, 48],
+      iconAnchor: [24, 24],
+      popupAnchor: [0, -24]
+    });
+    // Маркеры дронов
+    L.marker([56.835602, 60.792852], {icon: drone1Icon}).addTo(map).bindPopup('Дрон 1');
+    L.marker([56.832758, 60.794864], {icon: drone2Icon}).addTo(map).bindPopup('Дрон 2');
+  }
+};
