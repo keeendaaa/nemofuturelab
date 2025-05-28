@@ -25,6 +25,21 @@ async function setupAdmin() {
           product 
             ? `Товар получен: ${product.name}` 
             : `Заказ ${decoded} не найден`;
+        // Вывести карточку товара
+        const cardDiv = document.getElementById('product-card');
+        if (product) {
+          cardDiv.innerHTML = `
+            <div class="scanned-product-card">
+              <img src="/static/resources/product${product.id}.png" alt="${product.name}" class="scanned-product-img">
+              <div class="scanned-product-info">
+                <div class="scanned-product-title">${product.name}</div>
+                ${product.desc ? `<div class='scanned-product-desc'>${product.desc}</div>` : ''}
+              </div>
+            </div>
+          `;
+        } else {
+          cardDiv.innerHTML = '';
+        }
         
         await scanner.clear();
       } catch (error) {
