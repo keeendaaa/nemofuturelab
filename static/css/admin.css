@@ -146,6 +146,11 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
   background: #f8faff;
 }
 
+#flight-map .leaflet-control-attribution,
+#flight-map .leaflet-control-container .leaflet-control-attribution {
+  display: none !important;
+}
+
 @media (max-width: 900px) {
   .admin-layout {
     flex-direction: column;
