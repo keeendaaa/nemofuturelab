@@ -8,11 +8,17 @@
 </head>
 <body>
   <div id="admin-view" class="admin">
-    <h1>Админ-панель</h1>
-    <button id="scan-order">Получить заказ</button>
+    <h1 class="admin-title">Панель администратора</h1>
+    <button id="scan-order" class="admin-btn">
+      <img src="/static/resources/box.svg" alt="box" class="btn-icon">
+      Получить посылку
+    </button>
     <div id="reader" class="hidden"></div>
     <p id="admin-msg"></p>
-    <p><a href="/">Вернуться на сайт</a></p>
+    <p><a href="/" class="back-btn">
+      <img src="/static/resources/arrow-left.svg" alt="arrow left" class="back-icon">
+      Вернуться на сайт
+    </a></p>
   </div>
 
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
